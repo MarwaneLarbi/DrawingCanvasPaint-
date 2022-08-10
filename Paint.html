@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="author" content="Marwane Larbi">
+  <title>Paint</title>
+  <!-- Theme style -->
+  <link rel="stylesheet" href="css/adminlte.min.css">
+  <link rel="stylesheet" href="css/Tp.css">
+
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/jquery-3.5.1.js"></script>
+  <!-- for jcanvas -->
+  <script src="js/jcanvas.min.js"></script>
+  <!-- for color picker -->
+  <link rel="stylesheet" href="css/spectrum.css">
+  <script src="js/spectrum.js"></script>
+
+  <script src="js/jquery-ui.js"></script>
+</head>
+
+
+
+<body class=" layout-top-nav">
+
+
+  <div class="wrapper" style="max-width: 100%;  ">
+
+    <div id="bodyWraper">
+      <!-- Navbar -->
+      <nav class="main-header navbar navbar-expand-md navbar-light navbar-dark">
+        <div class="container" style=" margin-left: 0px;display: block;">
+
+
+
+          <button type="button" class="btn btn-danger  " id="clearCanvas" name="button">Clear Canvas</button>
+
+        </div>
+
+        <div class="float-right d-none d-sm-inline">
+          <a id="download" download="myImage.jpg" href="" class="navbar-brand" onclick="download_img(this);" title="save ">
+            <img src="img/image.svg" alt="save as photo" class="brand-image elevation-3" style="opacity: .8">
+          </a>        </div>
+          <div class="float-right d-none d-sm-inline">
+            <a id="download" download="myImage.jpg" href="" class="navbar-brand" onclick="window.print()" title="save ">
+              <img src="img/print.svg" alt="save as photo" class="brand-image elevation-3" style="opacity: .8">
+            </a>        </div>
+
+      </nav>
+      <!-- /.navbar -->
+
+      <div class="controls">
+        <h3>Tools:</h3>
+
+        <input  type="radio"name="shape" value="random" class="btn-check" id="btn-check-2-random"  >
+        <label class="btn btn-primary" for="btn-check-2-random">Draw</label><br>
+        <input  type="radio"name="shape" value="line" class="btn-check" id="btn-check-2-line"  >
+        <label class="btn btn-primary" for="btn-check-2-line">Line</label><br>
+        <input  type="radio"name="shape" value="rect" class="btn-check" id="btn-check-2-rect" >
+        <label class="btn btn-primary" for="btn-check-2-rect">Rectangle</label><br>
+        <input  type="radio"name="shape" value="circle" class="btn-check" id="btn-check-2-circle" >
+        <label class="btn btn-primary" for="btn-check-2-circle">Circle</label><br>
+        <input  type="radio"name="shape" value="square" class="btn-check" id="btn-check-2-square" >
+        <label class="btn btn-primary" for="btn-check-2-square">square</label><br>
+        <input  type="radio"name="shape" value="ellipse" class="btn-check" id="btn-check-2-Ellipse" >
+        <label class="btn btn-primary" for="btn-check-2-Ellipse">Ellipse</label><br>
+        <input  type="radio"name="shape" value="text" class="btn-check" id="btn-check-2-text"  >
+        <label class="btn btn-primary" for="btn-check-2-text">text</label><br>
+        <input  type="radio"name="shape" value="triangle" class="btn-check" id="btn-check-2-triangle"  >
+        <label class="btn btn-primary" for="btn-check-2-triangle">Triangle</label><br>
+        <form>
+        <h3> Text:</h3> <input type="text" id="textInput"/>
+        </form>
+        </div>
+        <div class="controls2">
+
+
+          <h3>Options:</h3>
+            <div class='lightBorder'>
+              <p><label> Size: <input id='lineWidth' type='range' step='1' min="1" max="200" value="4"></label></p>
+
+            <!-- color -->
+            <p><label>Fill Color: <input id='fillColor' type='color' step='1' value="#24B0D5"></label></p>
+            <p><label> Color: <input id='strokeColor' type='color' step='1'> </label></p>
+            <p><label>Background Color:<input id='backgroundColor' type='color' step='1' value="#ffffff"></label></p>
+          </div>
+            <p><label>Fill: <input id='fillBox' type='checkbox' checked='checked'></label></p>
+          </div>
+
+      <div class="content-wrapper">
+        <div class="content mt-2">
+
+          <div class="card">
+
+            <div class="card-body ">
+              <div id="content"><canvas id="canvas" width="880" height="780"></canvas></div>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- /.control-sidebar -->
+        <!-- Main Footer -->
+      </div>
+
+
+      <footer class="main-footer">
+        <!-- To the right -->
+
+        <!-- Default to the left -->
+        <strong>Copyright &copy; 2021-2022</strong> All rights reserved.
+      </footer>
+    </div>
+<script>
+var canvas,
+    context,
+    dragging = false,
+    dragStartLocation,
+    snapshot;
+let isPainting = false;
+
+
+function getCanvasCoordinates(event) {
+    var x = event.clientX - canvas.getBoundingClientRect().left;
+    var y = event.clientY - canvas.getBoundingClientRect().top;
+
+    return {
+        x: x,
+        y: y
+    };
+}
+
+function takeSnapShot() {
+    snapshot = context.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+function restoreSnapShot() {
+    context.putImageData(snapshot, 0, 0);
+}
+
+function drawLine(position) {
+
+    context.beginPath();
+    context.moveTo(dragStartLocation.x, dragStartLocation.y);
+    context.lineTo(position.x, position.y);
+    context.stroke();
+    context.closePath();
+
+}
+
+function drawCircle(position) {
+    context.fillStyle = document.getElementById('fillColor').value;
+
+    var radius = Math.sqrt(Math.pow((dragStartLocation.x - position.x), 2) + Math.pow((dragStartLocation.y - position.y), 2));
+    context.beginPath();
+    context.arc(dragStartLocation.x, dragStartLocation.y, radius, 0, 2 * Math.PI);
+    context.closePath();
+
+}
+
+
+function drawEllipse(position) {
+    context.fillStyle = document.getElementById('fillColor').value;
+
+    var w = position.x - dragStartLocation.x;
+    var h = position.y - dragStartLocation.y;
+    var radius = Math.sqrt(Math.pow((dragStartLocation.x - position.x), 2) + Math.pow((dragStartLocation.y - position.y), 2));
+    context.beginPath();
+    var cw = (dragStartLocation.x > position.x) ? true : false;
+
+    context.ellipse(dragStartLocation.x, dragStartLocation.y, Math.abs(w), Math.abs(h), 0, 2 * Math.PI, false);
+    context.closePath();
+
+}
+
+
+function drawRect(position) {
+    context.fillStyle = document.getElementById('fillColor').value;
+
+    var w = position.x - dragStartLocation.x;
+    var h = position.y - dragStartLocation.y;
+    context.beginPath();
+    context.rect(dragStartLocation.x, dragStartLocation.y, w, h);
+    context.closePath();
+
+}
+
+function drawrandom(position) {
+    context.fillStyle = "rgba(0, 0, 200, 0)";
+
+    context.lineTo(position.x, position.y);
+    context.stroke();
+}
+   
+ function calculateLineDistance(x1, y1, x2, y2) {
+
+        return Math.round(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)));
+
+    }
+function drawtriangle(position) {
+        context.fillStyle = document.getElementById('fillColor').value;
+        var distance = calculateLineDistance(dragStartLocation.x, dragStartLocation.y, position.x, position.y);
+        var height =  (distance) ;
+        context.beginPath();
+        context.moveTo(dragStartLocation.x, dragStartLocation.y);
+        context.lineTo(dragStartLocation.x + distance / 2, dragStartLocation.y + height);
+        context.lineTo(dragStartLocation.x - distance / 2, dragStartLocation.y + height);
+        context.closePath();
+
+}
+
+function drawPolygon(position, sides, angle) {
+    context.fillStyle = document.getElementById('fillColor').value;
+
+    var coordinates = [],
+        radius = Math.sqrt(Math.pow((dragStartLocation.x - position.x), 2) + Math.pow((dragStartLocation.y - position.y), 2)),
+        index = 0;
+
+    for (index; index < sides; index++) {
+        coordinates.push({
+            x: dragStartLocation.x + radius * Math.cos(angle),
+            y: dragStartLocation.y - radius * Math.sin(angle)
+        })
+        angle += (2 * Math.PI) / sides;
+    }
+
+
+    context.beginPath();
+    context.moveTo(coordinates[0].x, coordinates[0].y);
+
+    for (index = 0; index < sides; index++) {
+        context.lineTo(coordinates[index].x, coordinates[index].y);
+    }
+
+    context.closePath();
+
+}
+
+function drawText(position) {
+    context.fillStyle = document.getElementById('fillColor').value;
+  context.beginPath();
+    lineWidth=document.getElementById("lineWidth").value;
+    var t = $("#textInput").val();
+    context.font = lineWidth+"px Verdana";
+    context.textAlign = "left";
+    context.textBaseline = "top";
+
+    var textPxLength = context.measureText(t);
+    context.fillText(t, position.x, position.y);
+    context.closePath();
+
+}
+
+function draw(position) {
+    var fillBox = document.getElementById("fillBox"),
+        shape = document.querySelector('input[type="radio"][name="shape"]:checked').value
+        ,
+        polygonAngle = calculateAngle(dragStartLocation, position),
+        lineCap = 'round',
+        writeCanvas = document.getElementById('textInput').value;
+    context.lineCap = lineCap;
+
+    if (shape === "circle") {
+        drawCircle(position);
+    }
+    if (shape === "square") {
+        drawPolygon(position, 4, Math.PI / 4);
+    }
+    if (shape === "line") {
+        drawLine(position);
+    }
+    if (shape === "ellipse") {
+        drawEllipse(position);
+    }
+    if (shape === "rect") {
+        drawRect(position);
+    }
+    if (shape === "random") {
+        drawrandom(position)
+    }
+    if (shape === "text") {
+        drawText(position)
+    }
+
+    if (shape === "triangle") {
+        drawtriangle(position)
+    }
+    if (fillBox.checked) {
+        context.fill();
+    } else {
+        context.stroke();
+    }
+}
+var drawing = false
+function dragStart(event) {
+    shape = document.querySelector('input[type="radio"][name="shape"]:checked').value
+    dragStartLocation = getCanvasCoordinates(event);
+
+    if (shape === "random") {
+        if (drawing) {
+
+            context.lineTo(dragStartLocation.x, dragStartLocation.y);
+            context.closePath();
+            context.moveTo(dragStartLocation.x, dragStartLocation.y);
+        } else {
+            context.moveTo(dragStartLocation.x, dragStartLocation.y);
+            context.beginPath();
+        }
+
+    }
+    dragging = true;
+    takeSnapShot();
+}
+
+function calculateAngle(start, current) {
+
+    var angle = 360 - Math.atan2(current.y - start.y, current.x - start.x) * 180 / Math.PI;
+
+
+    return angle;
+}
+
+function drag(event) {
+    var position;
+    if (dragging === true) {
+        restoreSnapShot();
+        position = getCanvasCoordinates(event);
+        draw(position);
+    }
+}
+
+function dragStop(event) {
+    dragging = false; 
+    restoreSnapShot();
+    var position = getCanvasCoordinates(event);
+
+    draw(position);
+}
+
+function changeLineWidth() {
+    context.lineWidth = this.value;
+    event.stopPropagation();
+}
+function changeFillStyle() {
+    context.fillStyle = this.value;
+    event.stopPropagation();
+}
+function changeStrokeStyle() {
+    context.strokeStyle = this.value;
+    event.stopPropagation();
+}
+
+function changeBackgroundColor() {
+    context.save();
+    context.fillStyle = document.getElementById('backgroundColor').value;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.restore();
+
+}
+
+function eraseCanvas() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+canvas = document.getElementById('canvas');
+const canvasOffsetX = canvas.offsetLeft;
+const canvasOffsetY = canvas.offsetTop;
+function init() {
+    context = canvas.getContext('2d');
+
+
+    var lineWidth = document.getElementById('lineWidth'),
+        fillColor = document.getElementById('fillColor'),
+        strokeColor = document.getElementById('strokeColor'),
+        canvasColor = document.getElementById('backgroundColor'),
+        clearCanvas = document.getElementById('clearCanvas'),
+        textInput = document.getElementById('textInput');
+
+    context.lineWidth = lineWidth.value;
+
+
+    context.fillStyle = fillColor.value;
+
+
+    canvas.addEventListener('mousedown', dragStart, false);
+    canvas.addEventListener('mousemove', drag, false);
+    canvas.addEventListener('mouseup', dragStop, false);
+    lineWidth.addEventListener('input', changeLineWidth, false);
+    fillColor.addEventListener('input', changeFillStyle, false);
+    strokeColor.addEventListener('input', changeStrokeStyle, false);
+    canvasColor.addEventListener('input', changeBackgroundColor, false);
+    clearCanvas.addEventListener('click', eraseCanvas, false);
+}
+download_img = function(el) {
+  var imageURI = canvas.toDataURL("image/jpg");
+  el.href = imageURI;
+};
+window.addEventListener('load', init, false);
+window.addEventListener('load', (event) => {
+init();
+document.getElementById('fillColor').value='#fff'
+document.getElementById('strokeColor').value='#fff'
+document.getElementById('backgroundColor').value='#858588'
+document.getElementById("lineWidth").value=10
+});
+</script>
+</body>
+
+</html>
